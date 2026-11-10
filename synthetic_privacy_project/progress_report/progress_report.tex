@@ -1,0 +1,91 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\setlist{nosep,leftmargin=1.4em}
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{center}
+{\large\bfseries Good Data or Leaked Data?}\\[2pt]
+Do Aggregate Privacy Checks Hide Risk to Outlier Records in Synthetic Tabular Data?\\[4pt]
+Megha Chaudhari and Austin Qi\\
+Course Research Project --- Progress Report
+\end{center}
+
+\section*{Response to Proposal Feedback}
+
+The proposal feedback asked for a novel research question rather than a literature review alone. We have narrowed the project to one question that the papers we reviewed do not answer directly, and that we can test with our own experiment:
+
+\begin{quote}
+\emph{When a synthetic dataset passes the aggregate privacy check that generator papers commonly report, are outlier records in the training data still exposed at a much higher rate than typical records?}
+\end{quote}
+
+Generator papers such as TabDDPM~[3] summarize privacy with a single dataset-level number based on the distance to the closest record (DCR). Stadler et al.~[6] show with targeted attacks that outliers are the records most at risk. No paper we reviewed checks whether the commonly reported aggregate check would reveal that risk. If it does not, a dataset can look safe on paper while its most identifiable people are exposed. The literature review is still part of the project, but it now serves this question: it explains which checks are reported and why they might miss record-level risk.
+
+We test two hypotheses:
+\begin{itemize}
+\item \textbf{H1.} For a given generator, a simple membership inference attack succeeds more often on outlier records than on typical records.
+\item \textbf{H2.} The aggregate DCR check does not reveal this gap: generators can look close to the ideal value while outliers remain more exposed.
+\end{itemize}
+
+\section*{Progress on the Literature Review}
+
+We have organized the evaluation measures in our six papers into the four groups from the proposal. Table~\ref{tab:lit} records which groups each paper reports.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Paper & Statistical similarity & Predictive utility & Privacy-risk check & Formal guarantee \\
+\midrule
+SDV~[1] & yes & yes (human study) & -- & -- \\
+CTGAN~[2] & yes (likelihood) & yes & -- & -- \\
+TabDDPM~[3] & yes & yes & yes (DCR) & -- \\
+RCGAN~[4] & yes (MMD) & yes (TSTR) & yes (memorization) & yes (DP training) \\
+Herurkar et al.~[5] & yes (new metrics) & yes (TSTR/TRTS) & -- & -- \\
+Stadler et al.~[6] & -- & yes & yes (attacks) & yes (DP models) \\
+\bottomrule
+\end{tabular}
+\caption{Evaluation groups reported by each paper. ``--'' means not tested, not unsafe.}
+\label{tab:lit}
+\end{table}
+
+Two observations motivate our question. First, the three generator papers that define the field's benchmarks (SDV, CTGAN, Herurkar et al.) report no privacy-risk check at all. Second, where a check is reported (TabDDPM), it is a single dataset-level number. Only the dedicated privacy paper~[6] looks at individual records, and it uses attacks too costly to be routine in generator papers. Our experiment asks whether the cheap aggregate check is enough.
+
+%RESULTS%
+
+\section*{Remaining Work and Timeline}
+
+\begin{itemize}
+\item \textbf{Week 4 (current):} Done: data pipeline, five generators, utility and privacy measures, three random seeds. Next: confirm the outlier definition is not driving the result by repeating with a second definition (isolation forest) and a 5\% cut-off.
+\item \textbf{Week 5:} Add one stronger attack that uses all synthetic neighbors rather than the single closest record, and a second dataset if time allows. Write the full report.
+\item \textbf{Week 6:} Write the checklist (now including a record-level check for outliers), revise, and finalize the notebook.
+\end{itemize}
+
+\section*{Challenges and Changes}
+
+\begin{itemize}
+\item The Gaussian copula produced poor utility on Adult (Table~\ref{tab:results}), so it is mainly a low-utility, low-leakage reference point. We will report this rather than tune it to look better.
+\item Our attack and DCR both depend on how features are encoded and scaled. We fix the encoding on real training data only and document it in the code; results with other encodings may differ.
+\item One dataset and three seeds limit how far the results generalize. We will present them as evidence that the aggregate check \emph{can} miss outlier risk, not as a general rate.
+\end{itemize}
+
+Code and results are in our course repository under \texttt{synthetic\_privacy\_project/}.
+
+\section*{References}
+\small
+[1] N. Patki et al. The Synthetic Data Vault. IEEE DSAA, 2016.\\
+[2] L. Xu et al. Modeling Tabular Data using Conditional GAN. NeurIPS, 2019.\\
+[3] A. Kotelnikov et al. TabDDPM: Modelling Tabular Data with Diffusion Models. ICML, 2023.\\
+[4] C. Esteban et al. Real-valued (Medical) Time Series Generation with Recurrent Conditional GANs. arXiv:1706.02633, 2017.\\
+[5] D. Herurkar et al. Evaluating Generative Models for Tabular Data: Novel Metrics and Benchmarking. arXiv:2504.20900, 2025.\\
+[6] T. Stadler et al. Synthetic Data -- Anonymisation Groundhog Day. USENIX Security, 2022.
+
+\end{document}
