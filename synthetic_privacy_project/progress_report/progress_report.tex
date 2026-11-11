@@ -50,14 +50,14 @@ CTGAN~[2] & yes (likelihood) & yes & -- & -- \\
 TabDDPM~[3] & yes & yes & yes (DCR) & -- \\
 RCGAN~[4] & yes (MMD) & yes (TSTR) & yes (memorization) & yes (DP training) \\
 Herurkar et al.~[5] & yes (new metrics) & yes (TSTR/TRTS) & -- & -- \\
-Stadler et al.~[6] & -- & yes & yes (attacks) & yes (DP models) \\
+Stadler et al.~[6] & yes (means, marginals) & yes (accuracy) & yes (attacks) & yes (DP models) \\
 \bottomrule
 \end{tabular}
 \caption{Evaluation groups reported by each paper. ``--'' means not tested, not unsafe.}
 \label{tab:lit}
 \end{table}
 
-Two observations motivate our question. First, the three generator papers that define the field's benchmarks (SDV, CTGAN, Herurkar et al.) report no privacy-risk check at all. Second, where a check is reported (TabDDPM), it is a single dataset-level number. Only the dedicated privacy paper~[6] looks at individual records, and it uses attacks too costly to be routine in generator papers. Our experiment asks whether the cheap aggregate check is enough.
+Two observations motivate our question. First, the three generator papers that define the field's benchmarks (SDV, CTGAN, Herurkar et al.) report no privacy-risk check at all. Second, where a check is reported (TabDDPM), it is a single dataset-level number. Only the dedicated privacy paper~[6] looks at individual records. It finds outliers most exposed and explicitly argues against privacy evaluations based on similarity metrics, but its attacks train many shadow generative models per target, which is too costly to be routine in generator papers. Our experiment asks whether the cheap aggregate check is enough.
 
 \section*{Experimental Setup}
 
