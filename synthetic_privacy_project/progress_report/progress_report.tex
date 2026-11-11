@@ -59,7 +59,53 @@ Stadler et al.~[6] & -- & yes & yes (attacks) & yes (DP models) \\
 
 Two observations motivate our question. First, the three generator papers that define the field's benchmarks (SDV, CTGAN, Herurkar et al.) report no privacy-risk check at all. Second, where a check is reported (TabDDPM), it is a single dataset-level number. Only the dedicated privacy paper~[6] looks at individual records, and it uses attacks too costly to be routine in generator papers. Our experiment asks whether the cheap aggregate check is enough.
 
-%RESULTS%
+\section*{Experimental Setup}
+
+We use UCI Adult (45,222 complete rows). For each of three random seeds we split it into a training set (5,000 rows) used to fit the generators, a holdout set (5,000 rows) never seen by them, a test set (10,000 rows) for utility, and a reference set (the remaining rows) used only to define outliers. Each generator produces 5,000 synthetic rows. We compare the Gaussian copula~[1], CTGAN~[2] and TVAE~[2] (300 epochs, \texttt{sdv} library), a SMOTE-style interpolation baseline in the spirit of the TabDDPM comparison~[3], and a ``copy'' reference that resamples training rows directly.
+
+\begin{itemize}
+\item \textbf{Utility:} train a gradient-boosting classifier on synthetic data, test on real test data (TSTR), and report F1 for the \texttt{>50K} class.
+\item \textbf{Aggregate privacy check:} for each synthetic record, find its closest real record and ask whether it lies in the training set or the holdout set. The share closer to training is the \emph{DCR share}; 0.5 means no sign of copying.
+\item \textbf{Record-level risk:} a simple membership inference attack scores each real record by its distance to the closest synthetic record. We report the fraction of training members identified at a 1\% false-positive rate (TPR), separately for typical records and outliers.
+\item \textbf{Outliers:} the 10\% of training and holdout records with the largest mean distance to their 10 nearest neighbors in the reference set.
+\end{itemize}
+
+Distances use standardized numeric features and one-hot categorical features, with scaling fit on the training data only.
+
+\section*{Preliminary Results}
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+& TSTR F1 & DCR share & \multicolumn{2}{c}{Members identified at 1\% FPR} \\
+\cmidrule(l){4-5}
+Generator & & (0.5 = ideal) & Typical & Outliers \\
+\midrule
+Real data (reference) & 0.685 & -- & -- & -- \\
+Copy (reference) & 0.668 & 1.000 & 0.635 & 0.629 \\
+Interpolation (SMOTE-style) & 0.663 & 0.929 & 0.185 & 0.436 \\
+CTGAN & 0.599 & 0.506 & 0.011 & 0.009 \\
+TVAE & 0.586 & 0.520 & 0.010 & 0.013 \\
+Gaussian copula & 0.083 & 0.517 & 0.010 & 0.017 \\
+\bottomrule
+\end{tabular}
+\caption{Mean over three seeds. Random guessing identifies 1\% of members at 1\% FPR.}
+\label{tab:results}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\linewidth]{../results/fig_outlier_risk.pdf}
+\caption{Members identified by the attack at a 1\% false-positive rate, typical vs.\ outlier records (mean $\pm$ 1 s.d.\ over three seeds).}
+\label{fig:outlier}
+\end{figure}
+
+\textbf{H1 holds for interpolation, not for the deep generators.} The SMOTE-style baseline exposes outliers at more than twice the rate of typical records (43.6\% vs.\ 18.5\%, Figure~\ref{fig:outlier}), consistent across all three seeds. Interpolating between a rare record and its nearest neighbor produces points that sit close to that rare record and to few others. CTGAN and TVAE show no measurable leakage with our attack, for outliers or typical records, while keeping most of the real-data utility (F1 0.60 and 0.59 vs.\ 0.69).
+
+\textbf{In this setting the aggregate check is not misleading.} The interpolation baseline that leaks also fails the DCR check clearly (0.93), and the generators that pass it (0.51--0.52) show no leakage. So the natural experiment alone cannot answer H2: no generator here leaks only its outliers.
+
+%PLANTED%
 
 \section*{Remaining Work and Timeline}
 
