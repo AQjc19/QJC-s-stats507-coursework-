@@ -7,7 +7,7 @@
 \usepackage{enumitem}
 \usepackage[hidelinks]{hyperref}
 \setlist{nosep,leftmargin=1.4em}
-\setlength{\parskip}{0.5em}
+\setlength{\parskip}{0.4em}
 \setlength{\parindent}{0pt}
 
 \begin{document}
@@ -37,23 +37,23 @@ We test two hypotheses:
 
 \section*{Progress on the Literature Review}
 
-We have organized the evaluation measures in our six papers into the four groups from the proposal. Table~\ref{tab:lit} records which groups each paper reports.
+We have organized the evaluation measures in our six papers into the four groups from the proposal: statistical similarity, predictive utility, privacy-risk checks, and formal privacy guarantees. All six papers report some form of similarity or utility. Table~\ref{tab:lit} shows the two privacy groups, which our research question depends on.
 
 \begin{table}[h]
-\centering\small\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}lcccc@{}}
+\centering\small
+\begin{tabular}{@{}lll@{}}
 \toprule
-Paper & Statistical similarity & Predictive utility & Privacy-risk check & Formal guarantee \\
+Paper & Privacy-risk check & Formal privacy guarantee \\
 \midrule
-SDV~[1] & yes & yes (human study) & -- & -- \\
-CTGAN~[2] & yes (likelihood) & yes & -- & -- \\
-TabDDPM~[3] & yes & yes & yes (DCR) & -- \\
-RCGAN~[4] & yes (MMD) & yes (TSTR) & yes (memorization) & yes (DP training) \\
-Herurkar et al.~[5] & yes (new metrics) & yes (TSTR/TRTS) & -- & -- \\
-Stadler et al.~[6] & yes (means, marginals) & yes (accuracy) & yes (attacks) & yes (DP models) \\
+SDV~[1] & -- & -- \\
+CTGAN~[2] & -- & -- \\
+TabDDPM~[3] & distance to closest record (DCR) & -- \\
+RCGAN~[4] & memorization tests & differentially private training \\
+Herurkar et al.~[5] & -- & -- \\
+Stadler et al.~[6] & membership and attribute inference attacks & differentially private generators \\
 \bottomrule
 \end{tabular}
-\caption{Evaluation groups reported by each paper. ``--'' means not tested, not unsafe.}
+\caption{Privacy evaluations reported by each paper. ``--'' means not tested, not unsafe. Based on our reading so far; entries will be re-verified against the full texts for the final report.}
 \label{tab:lit}
 \end{table}
 
@@ -96,7 +96,7 @@ Gaussian copula & 0.083 & 0.517 & 0.010 & 0.017 \\
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.85\linewidth]{../results/fig_outlier_risk.pdf}
+\includegraphics[width=0.78\linewidth]{../results/fig_outlier_risk.pdf}
 \caption{Members identified by the attack at a 1\% false-positive rate, typical vs.\ outlier records (mean $\pm$ 1 s.d.\ over three seeds).}
 \label{fig:outlier}
 \end{figure}
@@ -115,7 +115,7 @@ Gaussian copula & 0.083 & 0.517 & 0.010 & 0.017 \\
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.95\linewidth]{../results/fig_planted.pdf}
+\includegraphics[width=0.9\linewidth]{../results/fig_planted.pdf}
 \caption{Planting near-copies of outlier training records into TVAE output (mean $\pm$ 1 s.d.\ over three seeds). (a) The aggregate DCR share stays within the range seen for unaltered generators (gray band). (b) The share of outlier members identified rises roughly linearly, while the overall rate stays near 1\%.}
 \label{fig:planted}
 \end{figure}
