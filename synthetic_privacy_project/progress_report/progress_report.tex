@@ -7,7 +7,7 @@
 \usepackage{enumitem}
 \usepackage[hidelinks]{hyperref}
 \setlist{nosep,leftmargin=1.4em}
-\setlength{\parskip}{0.4em}
+\setlength{\parskip}{0.35em}
 \setlength{\parindent}{0pt}
 
 \begin{document}
@@ -48,16 +48,16 @@ Paper & Privacy-risk check & Formal privacy guarantee \\
 SDV~[1] & -- & -- \\
 CTGAN~[2] & -- & -- \\
 TabDDPM~[3] & distance to closest record (DCR) & -- \\
-RCGAN~[4] & memorization tests & differentially private training \\
-Herurkar et al.~[5] & -- & -- \\
+RCGAN~[4] & train-vs-test memorization tests & differentially private training \\
+Herurkar et al.~[5] & -- (DCR mentioned, not applied) & -- \\
 Stadler et al.~[6] & membership and attribute inference attacks & differentially private generators \\
 \bottomrule
 \end{tabular}
-\caption{Privacy evaluations reported by each paper. ``--'' means not tested, not unsafe. Based on our reading so far; entries will be re-verified against the full texts for the final report.}
+\caption{Privacy evaluations reported by each paper. ``--'' means not tested, not unsafe. Rows for RCGAN, Herurkar et al.\ and Stadler et al.\ are checked against the full texts; the others are based on our reading so far and will be re-verified for the final report.}
 \label{tab:lit}
 \end{table}
 
-Two observations motivate our question. First, the three generator papers that define the field's benchmarks (SDV, CTGAN, Herurkar et al.) report no privacy-risk check at all. Second, where a check is reported (TabDDPM), it is a single dataset-level number. Only the dedicated privacy paper~[6] looks at individual records. It finds outliers most exposed and explicitly argues against privacy evaluations based on similarity metrics, but its attacks train many shadow generative models per target, which is too costly to be routine in generator papers. Our experiment asks whether the cheap aggregate check is enough.
+Two observations motivate our question. First, three of the six papers (SDV, CTGAN, Herurkar et al.) report no privacy-risk check; Herurkar et al.\ list DCR among existing metrics but do not apply it. Second, where a check is reported, it compares the training set with a held-out set as a whole. TabDDPM reports DCR, and RCGAN concludes that its model does not memorize because reconstruction errors (Kolmogorov--Smirnov test) and an MMD three-sample test do not differ significantly between training and test data. Only the dedicated privacy paper~[6] looks at individual records. It finds outliers most exposed and explicitly argues against privacy evaluations based on similarity metrics, but its attacks train many shadow generative models per target, which is too costly to be routine in generator papers. Our experiment asks whether the cheap aggregate check is enough.
 
 \section*{Experimental Setup}
 
@@ -96,7 +96,7 @@ Gaussian copula & 0.083 & 0.517 & 0.010 & 0.017 \\
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.78\linewidth]{../results/fig_outlier_risk.pdf}
+\includegraphics[width=0.7\linewidth]{../results/fig_outlier_risk.pdf}
 \caption{Members identified by the attack at a 1\% false-positive rate, typical vs.\ outlier records (mean $\pm$ 1 s.d.\ over three seeds).}
 \label{fig:outlier}
 \end{figure}
@@ -105,7 +105,7 @@ Gaussian copula & 0.083 & 0.517 & 0.010 & 0.017 \\
 
 \textbf{In this setting the aggregate check is not misleading.} The interpolation baseline that leaks also fails the DCR check clearly (0.93), and the generators that pass it (0.51--0.52) show no leakage. So the natural experiment alone cannot answer H2: no generator here leaks only its outliers.
 
-\textbf{A controlled test supports H2.} To test H2 directly, we start from TVAE output and replace a small number of synthetic rows with near-copies of randomly chosen outlier training records (numeric features jittered by 5\% of a standard deviation, so none is an exact duplicate). This simulates a generator that memorizes only its rarest records. Figure~\ref{fig:planted} shows the result:
+\textbf{A controlled test supports H2.} To test H2 directly, we adapt the approach Herurkar et al.~[5] use for fidelity metrics: inject a known defect and check whether the metric responds. We start from TVAE output and replace a small number of synthetic rows with near-copies of randomly chosen outlier training records (numeric features jittered by 5\% of a standard deviation, so none is an exact duplicate). This simulates a generator that memorizes only its rarest records. Figure~\ref{fig:planted} shows the result:
 
 \begin{itemize}
 \item With 50 planted rows (1\% of the synthetic data), the attack identifies 11.0\% of outlier members, up from 1.3\% with none planted. The DCR share moves only from 0.520 to 0.524, and the exact-duplicate check finds nothing.
@@ -115,7 +115,7 @@ Gaussian copula & 0.083 & 0.517 & 0.010 & 0.017 \\
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.9\linewidth]{../results/fig_planted.pdf}
+\includegraphics[width=0.82\linewidth]{../results/fig_planted.pdf}
 \caption{Planting near-copies of outlier training records into TVAE output (mean $\pm$ 1 s.d.\ over three seeds). (a) The aggregate DCR share stays within the range seen for unaltered generators (gray band). (b) The share of outlier members identified rises roughly linearly, while the overall rate stays near 1\%.}
 \label{fig:planted}
 \end{figure}
