@@ -21,6 +21,7 @@ FRACTIONS = [0.0, 0.0025, 0.005, 0.01, 0.02, 0.05]
 
 def plant(syn, train, outlier_idx, frac, rng, enc):
     syn = syn.copy()
+    syn[NUM] = syn[NUM].astype(float)
     k = int(round(frac * len(syn)))
     if k == 0:
         return syn
@@ -28,9 +29,7 @@ def plant(syn, train, outlier_idx, frac, rng, enc):
     noise = rng.normal(0, 0.05, size=(k, len(NUM))) * enc.sd.to_numpy()
     src[NUM] = src[NUM].to_numpy() + noise
     rows = rng.choice(len(syn), k, replace=False)
-    syn.iloc[rows] = src.to_numpy()
-    for c in NUM:
-        syn[c] = syn[c].astype(float)
+    syn.iloc[rows] = src[syn.columns].to_numpy()
     return syn
 
 
