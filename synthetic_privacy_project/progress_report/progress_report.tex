@@ -1,78 +1,48 @@
 \documentclass[11pt]{article}
-\usepackage[margin=1in]{geometry}
+\usepackage[margin=0.9in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{enumitem}
+\usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
 \setlist{nosep,leftmargin=1.4em}
-\setlength{\parskip}{0.35em}
+\setlength{\parskip}{0.3em}
 \setlength{\parindent}{0pt}
+\newcommand{\todo}[1]{\textcolor{red}{[#1]}}
 
 \begin{document}
 
 \begin{center}
 {\large\bfseries Good Data or Leaked Data?}\\[2pt]
 Do Aggregate Privacy Checks Hide Risk to Outlier Records in Synthetic Tabular Data?\\[4pt]
-Megha Chaudhari and Austin Qi\\
-Course Research Project --- Progress Report
+Megha Chaudhari and Austin Qi --- Midterm Project Update
 \end{center}
 
-\section*{Response to Proposal Feedback}
+\section*{Research Question}
 
-The proposal feedback asked for a novel research question rather than a literature review alone. We have narrowed the project to one question that the papers we reviewed do not answer directly, and that we can test with our own experiment:
+Synthetic tabular data is often proposed as a way to share data without exposing real people. Papers that introduce new generators usually summarize privacy with one dataset-level check, such as the distance to the closest record (DCR). Following the proposal feedback, we have narrowed our project from a literature review to a question we test ourselves:
 
 \begin{quote}
 \emph{When a synthetic dataset passes the aggregate privacy check that generator papers commonly report, are outlier records in the training data still exposed at a much higher rate than typical records?}
 \end{quote}
 
-Generator papers such as TabDDPM~[3] summarize privacy with a single dataset-level number based on the distance to the closest record (DCR). Stadler et al.~[6] show with targeted attacks that outliers are the records most at risk. No paper we reviewed checks whether the commonly reported aggregate check would reveal that risk. If it does not, a dataset can look safe on paper while its most identifiable people are exposed. The literature review is still part of the project, but it now serves this question: it explains which checks are reported and why they might miss record-level risk.
+We test two hypotheses. \textbf{H1:} a simple membership inference attack succeeds more often on outliers than on typical records. \textbf{H2:} the aggregate DCR check does not reveal this gap.
 
-We test two hypotheses:
-\begin{itemize}
-\item \textbf{H1.} For a given generator, a simple membership inference attack succeeds more often on outlier records than on typical records.
-\item \textbf{H2.} The aggregate DCR check does not reveal this gap: generators can look close to the ideal value while outliers remain more exposed.
-\end{itemize}
+\section*{Related Work}
 
-\section*{Progress on the Literature Review}
+\textbf{Tabular data generators.} The Synthetic Data Vault~[1] models single and multi-table relational data with Gaussian copulas and found that data scientists working with its synthetic data reached conclusions similar to those using the real data. CTGAN~[2] adapts GANs to mixed-type tables with mode-specific normalization for multimodal numeric columns and a conditional generator for imbalanced categorical columns; the same paper introduces TVAE and a benchmark in which the VAE is often competitive. TabDDPM~[3] combines Gaussian diffusion for numeric features with multinomial diffusion for categorical ones and outperforms GAN and VAE baselines on machine-learning utility. It also shows that SMOTE, which simply interpolates between real records, is a strong utility baseline. We use the copula, CTGAN, TVAE and an interpolation baseline in our experiments.
 
-We have organized the evaluation measures in our six papers into the four groups from the proposal: statistical similarity, predictive utility, privacy-risk checks, and formal privacy guarantees. All six papers report some form of similarity or utility. Table~\ref{tab:lit} shows the two privacy groups, which our research question depends on.
+\textbf{Utility and fidelity evaluation.} Esteban et al.~[4] introduced \emph{train on synthetic, test on real} (TSTR) and its reverse (TRTS), now the standard utility tests. CTGAN and TabDDPM evaluate utility the same way, as the accuracy of models trained on synthetic data. Herurkar et al.~[5] show that common fidelity scores such as SDV Fidelity can be insensitive to added noise and dropped modes, and propose FAED, FPCAD and RFIS, distribution distances inspired by FID and the Inception Score. Their method is to inject known defects into data and check whether each metric responds; we adapt this design to privacy checks.
 
-\begin{table}[h]
-\centering\small
-\begin{tabular}{@{}lll@{}}
-\toprule
-Paper & Privacy-risk check & Formal privacy guarantee \\
-\midrule
-SDV~[1] & -- & -- \\
-CTGAN~[2] & -- & -- \\
-TabDDPM~[3] & distance to closest record (DCR) & -- \\
-RCGAN~[4] & train-vs-test memorization tests & differentially private training \\
-Herurkar et al.~[5] & -- (DCR mentioned, not applied) & -- \\
-Stadler et al.~[6] & membership and attribute inference attacks & differentially private generators \\
-\bottomrule
-\end{tabular}
-\caption{Privacy evaluations reported by each paper. ``--'' means not tested, not unsafe. Rows for RCGAN, Herurkar et al.\ and Stadler et al.\ are checked against the full texts; the others are based on our reading so far and will be re-verified for the final report.}
-\label{tab:lit}
-\end{table}
+\textbf{Privacy evaluation.} Where generator papers check privacy, they compare the training set with held-out data as a whole. Esteban et al.~[4] conclude their model does not memorize because reconstruction errors (Kolmogorov--Smirnov test) and an MMD three-sample test do not differ between training and test data; TabDDPM reports DCR to show its samples are less similar to training records than SMOTE's. Membership inference attacks~[7] instead ask whether a specific record was in the training data, and Carlini et al.~[8] argue that such attacks should be judged by their true-positive rate at a low false-positive rate, since an average-case score can hide that a few records are reliably exposed. Stadler et al.~[6] apply shadow-model attacks to synthetic data and find that outlier records stay highly vulnerable; they argue directly against similarity-based privacy metrics. Their attacks train many generative models per target, too costly to be routine in generator papers. Formal protection comes from differential privacy, through DP-SGD~[9] (used by Esteban et al.) or PATE-GAN~[10], at a significant cost in utility~[6].
 
-Two observations motivate our question. First, three of the six papers (SDV, CTGAN, Herurkar et al.) report no privacy-risk check; Herurkar et al.\ list DCR among existing metrics but do not apply it. Second, where a check is reported, it compares the training set with a held-out set as a whole. TabDDPM reports DCR, and RCGAN concludes that its model does not memorize because reconstruction errors (Kolmogorov--Smirnov test) and an MMD three-sample test do not differ significantly between training and test data. Only the dedicated privacy paper~[6] looks at individual records. It finds outliers most exposed and explicitly argues against privacy evaluations based on similarity metrics, but its attacks train many shadow generative models per target, which is too costly to be routine in generator papers. Our experiment asks whether the cheap aggregate check is enough.
+\textbf{Gap.} The record-level work shows that outliers are at risk; the generator papers report aggregate checks. No paper we found tests whether those aggregate checks would detect leakage concentrated on outliers. That is our question.
 
-\section*{Experimental Setup}
+\section*{Progress and Preliminary Results}
 
-We use UCI Adult (45,222 complete rows). For each of three random seeds we split it into a training set (5,000 rows) used to fit the generators, a holdout set (5,000 rows) never seen by them, a test set (10,000 rows) for utility, and a reference set (the remaining rows) used only to define outliers. Each generator produces 5,000 synthetic rows. We compare the Gaussian copula~[1], CTGAN~[2] and TVAE~[2] (300 epochs, \texttt{sdv} library), a SMOTE-style interpolation baseline in the spirit of the TabDDPM comparison~[3], and a ``copy'' reference that resamples training rows directly.
-
-\begin{itemize}
-\item \textbf{Utility:} train a gradient-boosting classifier on synthetic data, test on real test data (TSTR), and report F1 for the \texttt{>50K} class.
-\item \textbf{Aggregate privacy check:} for each synthetic record, find its closest real record and ask whether it lies in the training set or the holdout set. The share closer to training is the \emph{DCR share}; 0.5 means no sign of copying.
-\item \textbf{Record-level risk:} a simple membership inference attack scores each real record by its distance to the closest synthetic record. We report the fraction of training members identified at a 1\% false-positive rate (TPR), separately for typical records and outliers.
-\item \textbf{Outliers:} the 10\% of training and holdout records with the largest mean distance to their 10 nearest neighbors in the reference set.
-\end{itemize}
-
-Distances use standardized numeric features and one-hot categorical features, with scaling fit on the training data only.
-
-\section*{Preliminary Results}
+\textbf{Setup.} We use UCI Adult (45,222 complete rows). For each of three seeds we draw a training set (5,000 rows) to fit the generators, a holdout set (5,000) they never see, a test set (10,000) for TSTR, and a reference set (the rest) used only to define outliers: the 10\% of records farthest from their 10 nearest reference neighbors. We fit a Gaussian copula, CTGAN and TVAE (\texttt{sdv}, 300 epochs), a SMOTE-style interpolation baseline, and a ``copy'' reference that resamples training rows. Each produces 5,000 rows. We measure \emph{utility} as TSTR F1 with gradient boosting; the \emph{aggregate check} as the DCR share, the fraction of synthetic records closer to a training than a holdout record (0.5 means no sign of copying); and \emph{record-level risk} as the share of training members a distance-based membership attack identifies at a 1\% false-positive rate, for typical and outlier records separately~[8].
 
 \begin{table}[h]
 \centering\small
@@ -94,62 +64,45 @@ Gaussian copula & 0.083 & 0.517 & 0.010 & 0.017 \\
 \label{tab:results}
 \end{table}
 
-\begin{figure}[h]
+\textbf{H1 holds for interpolation only.} The interpolation baseline exposes outliers at more than twice the rate of typical records (43.6\% vs.\ 18.5\%; Table~\ref{tab:results}), in all three seeds. CTGAN and TVAE show no measurable leakage with our attack while keeping most of the real-data utility. The copula's low F1 makes it a low-utility reference point.
+
+\textbf{H2: a controlled test.} In this natural experiment the DCR check is not misleading: the leaky baseline fails it clearly (0.93). To test H2 directly we follow Herurkar et al.'s design~[5]: starting from TVAE output, we replace a few synthetic rows with near-copies of random outlier training records (numeric features jittered by 5\% of a standard deviation). With 50 planted rows (1\% of the data), the attack identifies 11.0\% of outlier members instead of 1.3\%, while the DCR share moves only from 0.520 to 0.524 and no exact duplicates appear. With 250 rows, half of all outliers are exposed and the DCR share (0.545) is still within the range of the unaltered generators (Figure~\ref{fig:planted}). The overall attack rate barely moves (1.0\% to 1.4\%). A dataset can therefore pass the reported check while exposing many of its outliers.
+
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.7\linewidth]{../results/fig_outlier_risk.pdf}
-\caption{Members identified by the attack at a 1\% false-positive rate, typical vs.\ outlier records (mean $\pm$ 1 s.d.\ over three seeds).}
-\label{fig:outlier}
-\end{figure}
-
-\textbf{H1 holds for interpolation, not for the deep generators.} The SMOTE-style baseline exposes outliers at more than twice the rate of typical records (43.6\% vs.\ 18.5\%, Figure~\ref{fig:outlier}), consistent across all three seeds. Interpolating between a rare record and its nearest neighbor produces points that sit close to that rare record and to few others. CTGAN and TVAE show no measurable leakage with our attack, for outliers or typical records, while keeping most of the real-data utility (F1 0.60 and 0.59 vs.\ 0.69).
-
-\textbf{In this setting the aggregate check is not misleading.} The interpolation baseline that leaks also fails the DCR check clearly (0.93), and the generators that pass it (0.51--0.52) show no leakage. So the natural experiment alone cannot answer H2: no generator here leaks only its outliers.
-
-\textbf{A controlled test supports H2.} To test H2 directly, we adapt the approach Herurkar et al.~[5] use for fidelity metrics: inject a known defect and check whether the metric responds. We start from TVAE output and replace a small number of synthetic rows with near-copies of randomly chosen outlier training records (numeric features jittered by 5\% of a standard deviation, so none is an exact duplicate). This simulates a generator that memorizes only its rarest records. Figure~\ref{fig:planted} shows the result:
-
-\begin{itemize}
-\item With 50 planted rows (1\% of the synthetic data), the attack identifies 11.0\% of outlier members, up from 1.3\% with none planted. The DCR share moves only from 0.520 to 0.524, and the exact-duplicate check finds nothing.
-\item Even with 250 planted rows, about half of all outlier members (50.8\%) are identified, yet the DCR share (0.545) stays inside the range we observed for the unaltered generators (0.46--0.56).
-\item The attack's overall success rate barely moves either (1.0\% to 1.4\%). An average over all records hides the risk as well as the DCR check does.
-\end{itemize}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.82\linewidth]{../results/fig_planted.pdf}
-\caption{Planting near-copies of outlier training records into TVAE output (mean $\pm$ 1 s.d.\ over three seeds). (a) The aggregate DCR share stays within the range seen for unaltered generators (gray band). (b) The share of outlier members identified rises roughly linearly, while the overall rate stays near 1\%.}
+\includegraphics[width=0.72\linewidth]{../results/fig_planted.pdf}
+\caption{Planting near-copies of outlier training records into TVAE output (mean $\pm$ 1 s.d., three seeds). (a) The DCR share stays within the range of unaltered generators (gray). (b) The share of outlier members identified rises steadily; the overall rate stays near 1\%.}
 \label{fig:planted}
 \end{figure}
 
-\textbf{Takeaway so far.} A dataset can pass the dataset-level check that generator papers report while exposing a large share of its outliers. The check is only informative when leakage is widespread, as with interpolation. This suggests that privacy evaluations should report attack success on outliers (or another high-risk subgroup) separately, not only an average.
+\section*{Plan for the Rest of the Semester}
 
-\section*{Remaining Work and Timeline}
+\begin{enumerate}
+\item \textbf{Robustness (next 2 weeks).} Repeat with a second outlier definition (isolation forest) and a 5\% cut-off; add a stronger attack that uses several nearest synthetic neighbors; add a second dataset if time allows.
+\item \textbf{Final report (following 2 weeks).} Complete the related work, write a reporting checklist that includes a record-level check on outliers, and discuss limits: one dataset, a simple attack, and a planted test that shows what the check \emph{can} miss, not how often real generators leak this way.
+\end{enumerate}
+All code and results are in our repository (\texttt{synthetic\_privacy\_project/}) and reproduce in about ten minutes on a laptop.
 
-\begin{itemize}
-\item \textbf{Week 4 (current):} Done: data pipeline, five generators, utility and privacy measures, the planted-leakage test, three random seeds. Next: check that the outlier definition is not driving the result by repeating with a second definition (isolation forest) and a 5\% cut-off.
-\item \textbf{Week 5:} Add one stronger attack that uses all synthetic neighbors rather than the single closest record, and a second dataset if time allows. Write the full report.
-\item \textbf{Week 6:} Write the checklist (now including a record-level check for outliers), revise, and finalize the notebook.
-\end{itemize}
+\section*{Division of Work}
 
-\section*{Challenges and Changes}
+\textbf{So far.} \emph{Austin} reformulated the research question after the proposal feedback, implemented the experiment pipeline (data splits, generators, utility and privacy measures, planted-leakage test), ran the experiments and drafted this update. \emph{Megha} \todo{Megha: describe your contributions so far, e.g., proposal sections, paper reading, related work}. Both co-wrote the proposal.
 
-\begin{itemize}
-\item The Gaussian copula produced poor utility on Adult (Table~\ref{tab:results}), so it is mainly a low-utility, low-leakage reference point. We will report this rather than tune it to look better.
-\item Our attack and DCR both depend on how features are encoded and scaled. We fix the encoding on real training data only and document it in the code; results with other encodings may differ.
-\item One dataset and three seeds limit how far the results generalize. The planted test shows that the aggregate check \emph{can} miss concentrated leakage. It does not show that real generators leak this way; CTGAN and TVAE did not in our runs. We will present it in those terms.
-\item Our attack is deliberately simple. Stronger attacks~[6] might find leakage in CTGAN or TVAE that ours does not, so ``no measurable leakage'' means ``none found by this attack''.
-\end{itemize}
+\textbf{Remaining.} \emph{Austin} will lead the robustness experiments and the results section. \emph{Megha} will lead the privacy and differential-privacy discussion, the reporting checklist, and the limitations section. Both will verify the related work against the full papers and edit the final report.
 
-Code and results are in our course repository under \texttt{synthetic\_privacy\_project/}.
-
-\section*{References}
 {\small
+\section*{References}
 \begin{enumerate}[label={[\arabic*]},leftmargin=2.2em]
-\item N. Patki et al. The Synthetic Data Vault. IEEE DSAA, 2016.
-\item L. Xu et al. Modeling Tabular Data using Conditional GAN. NeurIPS, 2019.
-\item A. Kotelnikov et al. TabDDPM: Modelling Tabular Data with Diffusion Models. ICML, 2023.
-\item C. Esteban et al. Real-valued (Medical) Time Series Generation with Recurrent Conditional GANs. arXiv:1706.02633, 2017.
-\item D. Herurkar et al. Evaluating Generative Models for Tabular Data: Novel Metrics and Benchmarking. arXiv:2504.20900, 2025.
-\item T. Stadler et al. Synthetic Data -- Anonymisation Groundhog Day. USENIX Security, 2022.
-\end{enumerate}}
+\item N. Patki, R. Wedge, K. Veeramachaneni. The Synthetic Data Vault. IEEE DSAA, 2016.
+\item L. Xu, M. Skoularidou, A. Cuesta-Infante, K. Veeramachaneni. Modeling Tabular Data using Conditional GAN. NeurIPS, 2019.
+\item A. Kotelnikov, D. Baranchuk, I. Rubachev, A. Babenko. TabDDPM: Modelling Tabular Data with Diffusion Models. ICML, 2023.
+\item C. Esteban, S. L. Hyland, G. R\"atsch. Real-valued (Medical) Time Series Generation with Recurrent Conditional GANs. arXiv:1706.02633, 2017.
+\item D. Herurkar, A. Ali, A. Dengel. Evaluating Generative Models for Tabular Data: Novel Metrics and Benchmarking. arXiv:2504.20900, 2025.
+\item T. Stadler, B. Oprisanu, C. Troncoso. Synthetic Data -- Anonymisation Groundhog Day. USENIX Security, 2022.
+\item R. Shokri, M. Stronati, C. Song, V. Shmatikov. Membership Inference Attacks Against Machine Learning Models. IEEE S\&P, 2017.
+\item N. Carlini, S. Chien, M. Nasr, S. Song, A. Terzis, F. Tram\`er. Membership Inference Attacks From First Principles. IEEE S\&P, 2022.
+\item M. Abadi, A. Chu, I. Goodfellow, H. B. McMahan, I. Mironov, K. Talwar, L. Zhang. Deep Learning with Differential Privacy. ACM CCS, 2016.
+\item J. Jordon, J. Yoon, M. van der Schaar. PATE-GAN: Generating Synthetic Data with Differential Privacy Guarantees. ICLR, 2019.
+\end{enumerate}
+}
 
 \end{document}
